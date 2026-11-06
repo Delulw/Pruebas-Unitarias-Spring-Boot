@@ -1,135 +1,43 @@
-# Base Student
+# Estructura del proyecto y código fuente
 
-Base Student is a Spring Boot application scaffold for managing student records. The project currently contains the application entry point and a JPA entity; API, persistence, and service layers are not implemented yet.
+Se estableció la arquitectura base del proyecto en el entorno de desarrollo de Visual Studio Code, separando de manera estricta el código fuente de la aplicación (src/main) del directorio correspondiente a la suite de pruebas unitarias (src/test), garantizando una distribución limpia y estandarizada de los componentes del sistema.
 
-## Technology Stack
+![Estructura del proyecto](doc/imagen_1.png)
 
-- Java 21
-- Spring Boot 4.1.1
-- Maven Wrapper
-- Spring Data JPA
-- Spring MVC
-- PostgreSQL JDBC driver
-- Lombok
-- JUnit 5 and Spring Boot test support
+Dentro del archivo de configuración del gestor de dependencias (pom.xml), se incorporó formalmente la dependencia spring-boot-starter-test bajo el alcance (scope) de pruebas. Esta integración permitió habilitar el motor de ejecución de JUnit 5, las herramientas de simulación de entornos y las utilidades de aserción requeridas para el desarrollo de la práctica.
 
-## Requirements
+![Estructura del proyecto](doc/imagen_2.png)
 
-- JDK 21 or newer
-- No separate Maven installation is required; use the included Maven Wrapper.
-- PostgreSQL is required once the JPA persistence layer is connected to a database.
+Se desarrolló la clase de pruebas unitarias (StudentServiceTest.java) para validar las operaciones de la capa de lógica de negocio de forma aislada, para lograrlo: 
 
-## Getting Started
+- Se empleó la anotación @Mock para simular el comportamiento del repositorio de datos y @InjectMocks para gestionar la inyección en el servicio.  
 
-Clone the repository and move into the project directory:
+- Se implementó un ArgumentCaptor dentro del método de prueba testCreate para interceptar, extraer e inspeccionar detalladamente los atributos del modelo (nombre, apellido, teléfono y correo) antes de que se ejecute la operación de persistencia, asegurando la integridad de los datos procesados.
 
-```bash
-git clone <repository-url>
-cd base_student
-```
+![Estructura del proyecto](doc/imagen_3.png)
 
-Run the test suite:
 
-```bash
-./mvnw test
-```
+# Pruebas unitarias
+Para validar el correcto funcionamiento de la lógica de negocio en la capa de servicios de manera aislada, se implementó la clase StudentServiceTest utilizando JUnit 5, Mockito y AssertJ. A continuación se detallan las pruebas unitarias desarrolladas:
 
-On Windows, use:
+Esta prueba valida el proceso de creación de un nuevo estudiante. Se simula la respuesta del repositorio mediante when .thenReturn  y se implementa un ArgumentCaptor<StudentModel> para interceptar el objeto exacto que se envía a la base de datos. Esto permite comprobar detalladamente que los atributos (nombre, apellido, teléfono y correo electrónico) se asignen correctamente y que la respuesta devuelva el DTO esperado.
 
-```powershell
-.\mvnw.cmd test
-```
+![Estructura del proyecto](doc/imagen_4.png)
 
-Start the application:
+Esta prueba verifica la correcta eliminación de un registro por su identificador (id). Se configura el comportamiento simulado con doNothing() y se utiliza assertDoesNotThrow() para garantizar que la ejecución del método de borrado no arroje excepciones inesperadas. Finalmente, se emplea verify para confirmar que el método del repositorio fue invocado exactamente una vez.
 
-```bash
-./mvnw spring-boot:run
-```
+![Estructura del proyecto](doc/imagen_5.png)
 
-On Windows:
+Esta prueba comprueba la recuperación exitosa de todos los registros de estudiantes. Se simula el método findAll() para que devuelva una lista con dos elementos de prueba. Luego, se hace uso de las declaraciones fluidas de AssertJ para validar que la cantidad de elementos recuperados sea correcta y que los datos del primer registro coincidan plenamente.
 
-```powershell
-.\mvnw.cmd spring-boot:run
-```
+![Estructura del proyecto](doc/imagen_6.png)
 
-The application is configured with the name `base_student`. Spring Boot uses port `8080` by default.
+# Ejecución exitosa
 
-## Configuration
+Se llevó a cabo la ejecución de la suite de pruebas unitarias mediante la terminal utilizando el comando mvn test con el gestor de dependencias Maven. Como se observa en el reporte de consola, el proceso finalizó de manera óptima mostrando el mensaje BUILD SUCCESS, con un total de 4 pruebas ejecutadas de forma exitosa, reportando 0 fallos, 0 errores y 0 pruebas omitidas, lo que valida el cumplimiento total de los requerimientos de la práctica.
 
-The default configuration is in `src/main/resources/application.properties`; the development profile is in `src/main/resources/application-dev.properties`. Both files currently only define the application name.
+![Estructura del proyecto](doc/imagen_7.png)
 
-Although the PostgreSQL driver and Spring Data JPA are included, database connection properties have not been added yet. Before using the entity with PostgreSQL, configure a datasource, for example:
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/base_student
-spring.datasource.username=your_username
-spring.datasource.password=your_password
-spring.jpa.hibernate.ddl-auto=update
-```
 
-Do not commit real credentials. Prefer environment variables or an ignored local configuration file for local development.
 
-To activate the development profile:
-
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-## Current Domain Model
-
-`StudentModel` is mapped to the `student` table:
-
-| Property | Database column | Type | Notes |
-| --- | --- | --- | --- |
-| `id` | `id` | `Integer` | Auto-generated identity primary key |
-| `name` | `name` | `String` | Maximum length 80 |
-| `lastName` | `last_name` | `String` | Maximum length 50 |
-| `phone` | `phone` | `String` | Maximum length 20 |
-| `eMail` | `email` | `String` | Maximum length 80 |
-
-Lombok provides getters, setters, constructors, `equals`, `hashCode`, `toString`, and a builder for the entity.
-
-## Project Structure
-
-```text
-src/
-├── main/
-│   ├── java/com/base_student/
-│   │   ├── BaseStudentApplication.java
-│   │   ├── controller/      # REST or MVC controllers (planned)
-│   │   ├── dto/             # Request and response DTOs (planned)
-│   │   ├── model/           # JPA entities
-│   │   ├── respository/     # Repository interfaces (planned)
-│   │   └── service/         # Application services (planned)
-│   └── resources/
-│       ├── application.properties
-│       └── application-dev.properties
-└── test/java/com/base_student/
-    └── BaseStudentApplicationTests.java
-```
-
-## Build and Packaging
-
-Create a production JAR with:
-
-```bash
-./mvnw clean package
-```
-
-The packaged artifact is written to `target/`. Run it with:
-
-```bash
-java -jar target/base_student-0.0.1-SNAPSHOT.jar
-```
-
-## Testing
-
-The current test suite contains a Spring application context smoke test. Add controller, service, repository, and integration tests as those layers are implemented.
-
-## API Status
-
-No HTTP endpoints are currently exposed. Controllers, repositories, services, DTOs, validation, and database migrations remain to be implemented.
-
-## License
-
-No license has been specified for this project yet.
